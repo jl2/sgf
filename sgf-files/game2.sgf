@@ -1,0 +1,31 @@
+(;GM[1]FF[3]
+RU[Japanese]SZ[7]HA[0]KM[5.5]
+PW[White]
+PB[Black]
+GN[White (W) vs. Black (B)]
+DT[2022-06-20]
+SY[Cgoban 1.9.14]
+TM[30:00(5x1:00)];
+B[fb]
+BL[1798];
+W[fe]WL[1792];
+B[ce]BL[1794];
+W[dc]WL[1787];
+B[ff]BL[1791];
+W[db]WL[1781];
+B[bb]BL[1789];
+W[ef]WL[1777];
+B[df]BL[1788];
+W[be]WL[1774];
+B[ed]BL[1783];W[cc]WL[1762];B[cb]
+BL[1780];W[ec]WL[1760];B[cf]BL[1777];W[dd]WL[1756];B[cd]BL[1775];W[bd]
+WL[1755];B[bc]BL[1773];W[fc]WL[1753];B[fd]BL[1772];W[eb]WL[1752];B[ea]
+BL[1770];W[ca]WL[1751];B[ba]BL[1768];W[da]WL[1750];B[de]BL[1766];W[gc]
+WL[1746];B[gd]BL[1764];W[ee]WL[1744];B[gb]BL[1762];W[ab]WL[1738];B[db]
+BL[1760];W[eb]WL[1737];B[cc]BL[1759];W[ca]WL[1736];B[bf]BL[1757];W[cg]
+WL[1735];B[af]BL[1755];W[ae]WL[1734];B[dd]BL[1753];W[ac]WL[1730];B[eg]
+BL[1751];W[dg]WL[1730];B[bg]BL[1749];W[cg]WL[1728];B[dc]BL[1748];W[ge]
+WL[1727];B[fc]BL[1746];W[ga]WL[1725];B[da]BL[1744];W[aa]WL[1722];B[gg]
+BL[1743];W[tt]WL[1713];B[gf]BL[1741];W[ee]WL[1711];B[gc]BL[1740];W[ge]
+WL[1709];B[ef]BL[1739];W[tt]WL[1706];B[fe]BL[1736]
+)
