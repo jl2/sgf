@@ -37,17 +37,19 @@
     (pathname
      (probe-file fname))))
 
-(declaim (inline read-sgf))
 (defgeneric read-sgf (path-or-name-or-stream)
   (:documentation "Read an SGF file from a path, a stream, or a game file name from *sgf-file-dires*"))
 
 (defmethod read-sgf ((name string))
+  "Look for an sgf file with the given name in *sgf-file-dirs*, and open it."
   (read-sgf (find-sgf-file name)))
 
 (defmethod read-sgf ((path pathname))
+  "Read an SGF file from a file."
   (read-sgf-collection (create-parser
                         (alexandria:read-file-into-string path))))
 (defmethod read-sgf ((stream stream))
+  "Read an SGF file from a stream."
   (read-sgf-collection
    (create-parser
     (alexandria:read-stream-content-into-string stream))))
@@ -70,12 +72,10 @@
     (declare (type fixnum cur-pos)
              (type string text)
              (type stream stream))
-    
-    (format stream "(sgf-parser: pos: ~a text: ~s"
+
+    (format stream "(sgf-parser: pos: ~a cur-char: ~c"
             cur-pos
-            (subseq text
-                    (max (- cur-pos 5) 0)
-                    (min (+ cur-pos 5) (length text))))))
+            (current-char object))))
 
 (defun create-parser (my-string)
   "Create an SGF parser for a string."
@@ -86,21 +86,27 @@
   (with-slots (text cur-pos) parser
     (declare (type fixnum cur-pos)
              (type string text))
-    (= cur-pos (length text))))
+    (>= cur-pos (length text))))
+
+(defun skip-whitespace (parser)
+  "Advance to the next non-whitespace character."
+  (with-slots (text cur-pos) parser
+    (loop
+      :while (and
+              (not (finished-p parser))
+              (whitespace-p (aref text cur-pos)))
+      :do (incf cur-pos))
+    parser))
 
 (defun current-char (parser)
   "Character currently being read."
   (with-slots (text cur-pos) parser
     (declare (type fixnum cur-pos)
              (type simple-string text))
-    (loop
-      :while (and
-              (not (finished-p parser))
-              (whitespace-p (aref text cur-pos)))
-      :when (finished-p parser)
-        :do (return nil)
-      :do (incf cur-pos)
-      :finally (return (aref text cur-pos)))))
+    (cond ((finished-p parser)
+           nil)
+          (t
+           (aref text cur-pos)))))
 
 (defun read-until (parser char)
   "Return a string from cur-pos until the first instance of char, and advance the parser."
@@ -113,55 +119,53 @@
                         cur-pos
                         idx)))
       (setf cur-pos idx)
+      (skip-whitespace parser)
       str)))
 
 
 (defun match (parser char)
   "Validate that the character at cur-pos matches char and advance the parser."
-  (when (char/= (current-char parser) char)
-    (error "Expected ~a but found ~a" (current-char parser) char))
-  (incf (sp-cur-pos parser)))
+  (with-slots (cur-pos text) parser
+
+    (when  (char/= (current-char parser) char)
+      (error "Expected ~a but found ~a" (current-char parser) char))
+    (incf (sp-cur-pos parser))
+    (skip-whitespace parser)
+    (current-char parser)))
 
 ;; These functions are based on the EBNF from here: https://www.red-bean.com/sgf/sgf4.html
 
 (defun read-sgf-collection (parser)
   "Read an SGF collection."
-  (loop :for game-tree = (read-sgf-gametree parser)
-        :while game-tree
-        :collecting game-tree))
+  (if (finished-p parser) nil
+      (loop :for game-tree = (read-sgf-gametree parser)
+            :while game-tree
+            :collecting game-tree)))
 
 (defun read-sgf-gametree (parser)
   "Read an SGF Game Tree"
-  (if (finished-p parser)
-      nil
-      (case (current-char parser)
-        (nil nil)
-        (#\(
-         (match parser #\( )
-         (prog1
-             (nconc (read-sgf-sequence parser)
-                    (read-sgf-gametree parser))
-           (match parser #\))))
-        (otherwise nil))))
+  (when  (finished-p parser)
+    (return-from read-sgf-gametree  nil))
+  (case (current-char parser)
+    (#\(
+     (match parser #\( )
+     (prog1
+         (nconc
+          (loop :for node = (read-sgf-node parser)
+                :while node
+                :collecting node)
+          (read-sgf-collection parser))
 
-(defun read-sgf-sequence (parser)
-  "Read an SGF sequence."
-  (nconc
-   (loop :for node = (read-sgf-node parser)
-         :while node
-         :nconcing node)
-   (case (current-char parser)
-     (#\(
-      (loop :for game-tree = (read-sgf-gametree parser)
-            :while game-tree
-            :nconcing game-tree))
-     (otherwise nil))))
+       (match parser #\) )))))
+
 
 (defun read-sgf-node (parser)
   "Read an SGF node (property list)"
+  (when (finished-p parser)
+    (return-from read-sgf-node nil))
+
   (case (current-char parser)
-    (nil nil)
-    (#\) nil)
+
     (#\;
      (match parser #\;)
      (loop :for property = (read-sgf-property parser)
@@ -170,15 +174,16 @@
 
 (defun read-sgf-property (parser)
   "Read an SGF property."
+  (when (finished-p parser)
+    (return-from read-sgf-property nil))
   (case (current-char parser)
-    (nil nil)
-    (#\( (read-sgf-sequence parser))
+    (#\( nil)
     (#\) nil)
-    (#\; (read-sgf-node parser))
+    (#\; nil)
 
-    (otherwise 
-     (let ((node-tag (read-until parser #\[)))
+    (otherwise
+     (let ((prop-tag (read-until parser #\[)))
        (match parser #\[)
        (let ((text (read-until parser #\])))
          (match parser #\])
-         (cons node-tag text))))))
+         (cons prop-tag text))))))

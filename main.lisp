@@ -17,7 +17,6 @@
 
 (defun main (args)
   (format t "Hello!  This tool is REPL only for now.~%")
-  
   (format t "Args: ~{~a~^ ~}~%" args)
   (format t "~{~a~%~}~%" (mapcar #'read-sgf (cdr args)))
   0)

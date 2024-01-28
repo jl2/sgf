@@ -25,5 +25,40 @@
 (def-suite :sgf)
 (in-suite :sgf)
 
-(test hello
-  (is-true (hello)))
+(test sgf-finished
+  (let ((parser (sgf::create-parser "")))
+    (is-true (sgf::finished-p parser)))
+  (let ((parser (sgf::create-parser "a[b]")))
+    (is-false (sgf::finished-p parser))
+    (sgf::read-sgf-property parser)
+    (is-true (sgf::finished-p parser))
+    (is-true (null (sgf::read-sgf-property parser)))))
+
+(test sgf-property
+  (let* ((parser (sgf::create-parser "a[bc]"))
+         (prop (sgf::read-sgf-property parser)))
+    (is-true (string= (car prop) "a"))
+    (is-true (string= (cdr prop) "bc"))))
+
+
+(test sgf-node-one-property
+  (let* ((parser (sgf::create-parser ";a[bc]"))
+         (node (sgf::read-sgf-node parser)))
+    (is-true (=  (length node) 1))
+
+    (let ((prop1 (car node)))
+      (is-true (string= (car prop1) "a"))
+      (is-true (string= (cdr prop1) "bc")))))
+
+(test sgf-node-two-properties
+  (let* ((parser (sgf::create-parser ";a[bc] x[yz]"))
+         (node (sgf::read-sgf-node parser)))
+    (is-true (=  (length node) 2))
+
+    (let ((prop1 (car node))
+          (prop2 (cadr node)))
+
+      (is-true (string= (car prop1) "a"))
+      (is-true (string= (cdr prop1) "bc"))
+      (is-true (string= (car prop2) "x"))
+      (is-true (string= (cdr prop2) "yz")))))
