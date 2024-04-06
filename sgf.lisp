@@ -128,7 +128,7 @@
   (with-slots (cur-pos text) parser
 
     (when  (char/= (current-char parser) char)
-      (error "Expected ~a but found ~a" (current-char parser) char))
+      (error "Expected ~c but found ~c" (current-char parser) char))
     (incf (sp-cur-pos parser))
     (skip-whitespace parser)
     (current-char parser)))

@@ -26,4 +26,4 @@ manifest.txt: *.asd
 clean:
 	rm -Rf manifest.txt  *.fasl
 
-.PHONY: clean
+.PHONY: clean test
